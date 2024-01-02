@@ -8,3 +8,5 @@ authors = ["nubiv"]
 
 [dependencies]
 ndarray = "0.15.6"
+ndarray-rand = "0.14.0"
+rand_isaac = "0.3.0"
