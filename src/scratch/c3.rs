@@ -18,14 +18,14 @@ pub(crate) fn add_layers() {
     println!("{:#?}", layer2_outputs);
 }
 
-struct LayerDense {
+pub(crate) struct LayerDense {
     weights: Array2<f64>,
     biases: Array2<f64>,
-    output: Array2<f64>,
+    pub(crate) output: Array2<f64>,
 }
 
 impl LayerDense {
-    fn new(n_inputs: usize, n_neurons: usize) -> LayerDense {
+    pub(crate) fn new(n_inputs: usize, n_neurons: usize) -> LayerDense {
         let mut rng = Isaac64Rng::seed_from_u64(0);
 
         LayerDense {
@@ -36,7 +36,7 @@ impl LayerDense {
         }
     }
 
-    fn forward(&mut self, inputs: &Array2<f64>) {
+    pub(crate) fn forward(&mut self, inputs: &Array2<f64>) {
         self.output = inputs.dot(&self.weights) + &self.biases;
     }
 }
