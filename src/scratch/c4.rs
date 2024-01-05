@@ -1,4 +1,4 @@
-use ndarray::{s, Array, Array2, ArrayD, IxDyn};
+use ndarray::{array, s, Array, Array1, Array2, ArrayD, IxDyn};
 use ndarray_rand::{rand::SeedableRng, rand_distr::Uniform, RandomExt};
 use rand_isaac::Isaac64Rng;
 
@@ -34,4 +34,39 @@ pub(crate) fn activation_forward() {
     activation.forward(&dense1.output);
 
     println!("{:?}", activation.output.slice(s![0..5, ..]));
+}
+
+pub(crate) fn softmax_activation() {
+    const E: f64 = std::f64::consts::E;
+    let layer_outputs = [4.8, 1.21, 2.385];
+
+    let mut exp_values: Vec<f64> = vec![];
+    for output in layer_outputs {
+        exp_values.push(f64::powf(E, output));
+    }
+    println!("exe valeus >>> {:#?}", exp_values);
+
+    let norm_base: f64 = exp_values.iter().sum();
+    let mut norm_values: Vec<f64> = vec![];
+    for value in exp_values {
+        norm_values.push(value / norm_base);
+    }
+    println!("normalized exponentiated values >>> {:#?}", norm_values);
+    println!(
+        "sum of normalized values >>> {:#?}",
+        norm_values.iter().sum::<f64>()
+    );
+}
+
+pub(crate) fn softmax_activation_ndarray() {
+    let layer_outputs = array![4.8, 1.21, 2.385];
+
+    let exp_values = layer_outputs.mapv(|v: f64| v.exp());
+    println!("exponentiated valeus >>> {:#?}", exp_values);
+
+    let sum_exp_values: f64 = exp_values.sum();
+    let norm_values = exp_values / sum_exp_values;
+    println!("normalized exponentiated values >>> {:#?}", norm_values);
+
+    println!("sum of normalized values >>> {}", norm_values.sum());
 }
