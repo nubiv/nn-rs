@@ -1,4 +1,4 @@
-use ndarray::{array, s, Array, Array1, Array2, ArrayD, IxDyn};
+use ndarray::{array, s, Array, Array1, Array2, ArrayD, Axis, IxDyn};
 use ndarray_rand::{rand::SeedableRng, rand_distr::Uniform, RandomExt};
 use rand_isaac::Isaac64Rng;
 
@@ -9,7 +9,7 @@ struct ActivationReLU {
 }
 
 impl ActivationReLU {
-    fn forward(&mut self, inputs: &Array2<f64>) {
+    fn forward(&mut self, inputs: &ArrayD<f64>) {
         self.output = inputs.mapv(|a: f64| a.max(0.0)).into_dyn();
     }
 }
@@ -31,7 +31,7 @@ pub(crate) fn activation_forward() {
     let mut activation = ActivationReLU {
         output: ArrayD::default(IxDyn::default()),
     };
-    activation.forward(&dense1.output);
+    activation.forward(&dense1.output.into_dyn());
 
     println!("{:?}", activation.output.slice(s![0..5, ..]));
 }
@@ -58,15 +58,48 @@ pub(crate) fn softmax_activation() {
     );
 }
 
+struct ActivationSoftware {
+    output: ArrayD<f64>,
+}
+
+impl ActivationSoftware {
+    fn forward(&mut self, inputs: &ArrayD<f64>) {
+        let exp_values = inputs.mapv(|v: f64| v.exp());
+
+        let n_dim = inputs.ndim();
+        match n_dim {
+            2 => {
+                let sum_exp_values = exp_values.sum_axis(Axis(0)).insert_axis(Axis(0));
+                let probabilities = exp_values / sum_exp_values;
+
+                self.output = probabilities
+            }
+            _ => {
+                panic!(
+                    "Cannot process the output layer with {}-dimention inputs from previous layer",
+                    n_dim
+                )
+            }
+        }
+    }
+}
+
 pub(crate) fn softmax_activation_ndarray() {
-    let layer_outputs = array![4.8, 1.21, 2.385];
+    let layer_outputs = array![[4.8, 1.21, 2.385]];
 
-    let exp_values = layer_outputs.mapv(|v: f64| v.exp());
-    println!("exponentiated valeus >>> {:#?}", exp_values);
+    let mut activation_softmax = ActivationSoftware {
+        output: ArrayD::default(IxDyn::default()),
+    };
 
-    let sum_exp_values: f64 = exp_values.sum();
-    let norm_values = exp_values / sum_exp_values;
-    println!("normalized exponentiated values >>> {:#?}", norm_values);
+    activation_softmax.forward(&layer_outputs.into_dyn());
+    println!("softmax output >>> {:#?}", activation_softmax.output);
 
-    println!("sum of normalized values >>> {}", norm_values.sum());
+    // let exp_values = layer_outputs.mapv(|v: f64| v.exp());
+    // println!("exponentiated valeus >>> {:#?}", exp_values);
+
+    // let sum_exp_values: f64 = exp_values.sum();
+    // let norm_values = exp_values / sum_exp_values;
+    // println!("normalized exponentiated values >>> {:#?}", norm_values);
+
+    // println!("sum of normalized values >>> {}", norm_values.sum());
 }
