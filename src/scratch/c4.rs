@@ -69,7 +69,7 @@ impl ActivationSoftware {
         let n_dim = inputs.ndim();
         match n_dim {
             2 => {
-                let sum_exp_values = exp_values.sum_axis(Axis(0)).insert_axis(Axis(0));
+                let sum_exp_values = exp_values.sum_axis(Axis(1)).insert_axis(Axis(1));
                 let probabilities = exp_values / sum_exp_values;
 
                 self.output = probabilities
