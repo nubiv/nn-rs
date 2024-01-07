@@ -1,5 +1,18 @@
-use ndarray::{array, s, Array, Array1, Array2, ArrayD, Axis, IxDyn};
-use ndarray_rand::{rand::SeedableRng, rand_distr::Uniform, RandomExt};
+use ndarray::{
+    array,
+    s,
+    Array,
+    Array1,
+    Array2,
+    ArrayD,
+    Axis,
+    IxDyn,
+};
+use ndarray_rand::{
+    rand::SeedableRng,
+    rand_distr::Uniform,
+    RandomExt,
+};
 use rand_isaac::Isaac64Rng;
 
 use crate::scratch::c3::LayerDense;
@@ -10,7 +23,9 @@ struct ActivationReLU {
 
 impl ActivationReLU {
     fn forward(&mut self, inputs: &ArrayD<f64>) {
-        self.output = inputs.mapv(|a: f64| a.max(0.0)).into_dyn();
+        self.output = inputs
+            .mapv(|a: f64| a.max(0.0))
+            .into_dyn();
     }
 }
 
@@ -19,13 +34,19 @@ pub(crate) fn activation_forward() {
     let n_features = 3;
 
     let mut rng = Isaac64Rng::seed_from_u64(0);
-    let x: Array2<f64> =
-        Array::random_using((n_samples, n_features), Uniform::new(-1.0, 1.0), &mut rng);
+    let x: Array2<f64> = Array::random_using(
+        (n_samples, n_features),
+        Uniform::new(-1.0, 1.0),
+        &mut rng,
+    );
 
-    // Create Dense layer with 2 input features and 3 output values
-    let mut dense1 = LayerDense::new(n_features, 3);
+    // Create Dense layer with 2 input features
+    // and 3 output values
+    let mut dense1 =
+        LayerDense::new(n_features, 3);
 
-    // Perform a forward pass of our training data through this layer
+    // Perform a forward pass of our training data
+    // through this layer
     dense1.forward(&x);
 
     let mut activation = ActivationReLU {
@@ -33,7 +54,10 @@ pub(crate) fn activation_forward() {
     };
     activation.forward(&dense1.output.into_dyn());
 
-    println!("{:?}", activation.output.slice(s![0..5, ..]));
+    println!(
+        "{:?}",
+        activation.output.slice(s![0..5, ..])
+    );
 }
 
 pub(crate) fn softmax_activation() {
@@ -64,13 +88,17 @@ struct ActivationSoftware {
 
 impl ActivationSoftware {
     fn forward(&mut self, inputs: &ArrayD<f64>) {
-        let exp_values = inputs.mapv(|v: f64| v.exp());
+        let exp_values =
+            inputs.mapv(|v: f64| v.exp());
 
         let n_dim = inputs.ndim();
         match n_dim {
             2 => {
-                let sum_exp_values = exp_values.sum_axis(Axis(1)).insert_axis(Axis(1));
-                let probabilities = exp_values / sum_exp_values;
+                let sum_exp_values = exp_values
+                    .sum_axis(Axis(1))
+                    .insert_axis(Axis(1));
+                let probabilities =
+                    exp_values / sum_exp_values;
 
                 self.output = probabilities
             }
@@ -85,21 +113,33 @@ impl ActivationSoftware {
 }
 
 pub(crate) fn softmax_activation_ndarray() {
-    let layer_outputs = array![[4.8, 1.21, 2.385]];
+    let layer_outputs =
+        array![[4.8, 1.21, 2.385]];
 
-    let mut activation_softmax = ActivationSoftware {
-        output: ArrayD::default(IxDyn::default()),
-    };
+    let mut activation_softmax =
+        ActivationSoftware {
+            output: ArrayD::default(
+                IxDyn::default(),
+            ),
+        };
 
-    activation_softmax.forward(&layer_outputs.into_dyn());
-    println!("softmax output >>> {:#?}", activation_softmax.output);
+    activation_softmax
+        .forward(&layer_outputs.into_dyn());
+    println!(
+        "softmax output >>> {:#?}",
+        activation_softmax.output
+    );
 
-    // let exp_values = layer_outputs.mapv(|v: f64| v.exp());
-    // println!("exponentiated valeus >>> {:#?}", exp_values);
+    // let exp_values = layer_outputs.mapv(|v:
+    // f64| v.exp()); println!("exponentiated
+    // valeus >>> {:#?}", exp_values);
 
     // let sum_exp_values: f64 = exp_values.sum();
-    // let norm_values = exp_values / sum_exp_values;
-    // println!("normalized exponentiated values >>> {:#?}", norm_values);
+    // let norm_values = exp_values /
+    // sum_exp_values; println!("normalized
+    // exponentiated values >>> {:#?}",
+    // norm_values);
 
-    // println!("sum of normalized values >>> {}", norm_values.sum());
+    // println!("sum of normalized values >>> {}",
+    // norm_values.sum());
 }
