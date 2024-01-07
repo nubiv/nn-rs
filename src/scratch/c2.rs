@@ -104,8 +104,8 @@ pub(crate) fn run_nn() {
 }
 
 fn single_neuron() {
-    let inputs = vec![1.0, 2.0, 3.0, 2.5];
-    let weights = vec![0.2, 0.8, -0.5, 1.0];
+    let inputs = [1.0, 2.0, 3.0, 2.5];
+    let weights = [0.2, 0.8, -0.5, 1.0];
     let bias = 2.0;
 
     let output = inputs[0] * weights[0]
