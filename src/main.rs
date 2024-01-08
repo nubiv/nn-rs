@@ -20,6 +20,7 @@ use scratch::{
         softmax_activation,
         softmax_activation_ndarray,
     },
+    c5::categorical_cross_entropy_loss,
 };
 
 mod model;
@@ -34,5 +35,6 @@ fn main() {
     // activation_forward();
     // softmax_activation();
     // softmax_activation_ndarray();
-    run();
+    // run();
+    categorical_cross_entropy_loss();
 }
