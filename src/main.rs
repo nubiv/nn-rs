@@ -35,6 +35,6 @@ fn main() {
     // activation_forward();
     // softmax_activation();
     // softmax_activation_ndarray();
-    // run();
-    categorical_cross_entropy_loss();
+    // categorical_cross_entropy_loss();
+    run();
 }
