@@ -23,9 +23,7 @@ struct ActivationReLU {
 
 impl ActivationReLU {
     fn forward(&mut self, inputs: &ArrayD<f64>) {
-        self.output = inputs
-            .mapv(|a: f64| a.max(0.0))
-            .into_dyn();
+        self.output = inputs.mapv(|a: f64| a.max(0.0)).into_dyn();
     }
 }
 
@@ -42,8 +40,7 @@ pub(crate) fn activation_forward() {
 
     // Create Dense layer with 2 input features
     // and 3 output values
-    let mut dense1 =
-        LayerDense::new(n_features, 3);
+    let mut dense1 = LayerDense::new(n_features, 3);
 
     // Perform a forward pass of our training data
     // through this layer
@@ -54,10 +51,7 @@ pub(crate) fn activation_forward() {
     };
     activation.forward(&dense1.output.into_dyn());
 
-    println!(
-        "{:?}",
-        activation.output.slice(s![0..5, ..])
-    );
+    println!("{:?}", activation.output.slice(s![0..5, ..]));
 }
 
 pub(crate) fn softmax_activation() {
@@ -88,17 +82,14 @@ struct ActivationSoftware {
 
 impl ActivationSoftware {
     fn forward(&mut self, inputs: &ArrayD<f64>) {
-        let exp_values =
-            inputs.mapv(|v: f64| v.exp());
+        let exp_values = inputs.mapv(|v: f64| v.exp());
 
         let n_dim = inputs.ndim();
         match n_dim {
             2 => {
-                let sum_exp_values = exp_values
-                    .sum_axis(Axis(1))
-                    .insert_axis(Axis(1));
-                let probabilities =
-                    exp_values / sum_exp_values;
+                let sum_exp_values =
+                    exp_values.sum_axis(Axis(1)).insert_axis(Axis(1));
+                let probabilities = exp_values / sum_exp_values;
 
                 self.output = probabilities
             }
@@ -113,22 +104,14 @@ impl ActivationSoftware {
 }
 
 pub(crate) fn softmax_activation_ndarray() {
-    let layer_outputs =
-        array![[4.8, 1.21, 2.385]];
+    let layer_outputs = array![[4.8, 1.21, 2.385]];
 
-    let mut activation_softmax =
-        ActivationSoftware {
-            output: ArrayD::default(
-                IxDyn::default(),
-            ),
-        };
+    let mut activation_softmax = ActivationSoftware {
+        output: ArrayD::default(IxDyn::default()),
+    };
 
-    activation_softmax
-        .forward(&layer_outputs.into_dyn());
-    println!(
-        "softmax output >>> {:#?}",
-        activation_softmax.output
-    );
+    activation_softmax.forward(&layer_outputs.into_dyn());
+    println!("softmax output >>> {:#?}", activation_softmax.output);
 
     // let exp_values = layer_outputs.mapv(|v:
     // f64| v.exp()); println!("exponentiated
