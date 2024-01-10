@@ -5,6 +5,7 @@ use ndarray::{
     Array2,
     ArrayD,
     Axis,
+    Ix1,
     Ix2,
 };
 use ndarray_rand::{
@@ -126,11 +127,51 @@ impl Loss for Model {
     }
 }
 
+trait Accuracy {
+    fn calculate_accuracy(&mut self, y_true: ArrayD<usize>) -> f64;
+}
+
+impl Accuracy for Model {
+    fn calculate_accuracy(&mut self, y_true: ArrayD<usize>) -> f64 {
+        let predictions = &mut self.output;
+        let pred_argmax = predictions.map_axis_mut(Axis(1), |subview| {
+            subview
+                .indexed_iter()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .map(|(idx, _)| idx)
+                .unwrap_or(0)
+        });
+
+        let shape_len = y_true.ndim();
+        let y_true = match shape_len {
+            1 => y_true.into_dimensionality::<Ix1>().unwrap(),
+            2 => y_true.into_dimensionality::<Ix2>().unwrap().map_axis_mut(
+                Axis(1),
+                |subview| {
+                    subview
+                        .indexed_iter()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx)
+                        .unwrap_or(0)
+                },
+            ),
+            _ => panic!("OOPS! Unexpected lable types."),
+        };
+
+        let correct_count = pred_argmax
+            .iter()
+            .zip(y_true.iter())
+            .filter(|(&p, &t)| p == t)
+            .count();
+        correct_count as f64 / pred_argmax.len() as f64
+    }
+}
+
 pub(crate) fn run() {
     let n_samples = 100;
     let n_features = 3;
 
-    let mut rng = Isaac64Rng::seed_from_u64(1);
+    let mut rng = Isaac64Rng::seed_from_u64(0);
     let inputs: Array2<f64> = Array::random_using(
         (n_samples, n_features),
         Uniform::new(0.0, 1.0),
@@ -143,6 +184,8 @@ pub(crate) fn run() {
         let class_idx = rng.gen_range(0..n_features);
         row[class_idx] = 1;
     }
+    // DEBUG: println! y_true
+    println!("y_true >>> {:#?}", y_true.slice(s![0..5, ..]));
 
     let mut model = Model::default();
     model.load_inputs(inputs);
@@ -176,6 +219,10 @@ pub(crate) fn run() {
         "softmax forward output >>> {:#?}",
         model.output.slice(s![0..5, ..])
     );
+
+    let accuracy = model.calculate_accuracy(y_true.clone().into_dyn());
+    // DEBUG: println! accuracy
+    println!("accuracy >>> {:#?}", accuracy);
 
     let sample_losses =
         model.categorical_cross_entropy_forward(y_true.into_dyn());
