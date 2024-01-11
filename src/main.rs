@@ -1,6 +1,6 @@
 #![allow(unused_imports, dead_code, unused_variables)]
 
-use model::run;
+use model::train_model;
 use scratch::{
     c2::{
         proc_batch_data,
@@ -32,5 +32,5 @@ fn main() {
     // softmax_activation();
     // softmax_activation_ndarray();
     // categorical_cross_entropy_loss();
-    run();
+    train_model()
 }
