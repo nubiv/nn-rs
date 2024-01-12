@@ -27,33 +27,11 @@ struct Model {
     inputs: Array2<f64>,
     y_true: ArrayD<usize>,
     output: Array2<f64>,
-    dense1_weights: Array2<f64>,
-    dense1_biases: Array2<f64>,
-    dense2_weights: Array2<f64>,
-    dense2_biases: Array2<f64>,
 }
 
 impl Model {
     fn default(n_features: usize) -> Model {
-        let mut rng = Isaac64Rng::seed_from_u64(0);
-
-        let weights1 = Array::random_using(
-            (n_features, 2),
-            Uniform::new(-1.0, 1.0),
-            &mut rng,
-        ) * 0.01;
-        let biases1 = Array::zeros((1, 2));
-
-        let weights2 =
-            Array::random_using((3, 3), Uniform::new(-1.0, 1.0), &mut rng)
-                * 0.01;
-        let biases2 = Array::zeros((1, 3));
-
         Model {
-            dense1_weights: weights1,
-            dense1_biases: biases1,
-            dense2_weights: weights2,
-            dense2_biases: biases2,
             ..Default::default()
         }
     }
@@ -68,12 +46,12 @@ impl Model {
 }
 
 trait DenseLayer {
-    fn dense_forward(&mut self, weights: Array2<f64>, biases: Array2<f64>);
+    fn dense_forward(&mut self, weights: &Array2<f64>, biases: &Array2<f64>);
 }
 
 impl DenseLayer for Model {
-    fn dense_forward(&mut self, weights: Array2<f64>, biases: Array2<f64>) {
-        self.output = self.inputs.dot(&weights) + &biases;
+    fn dense_forward(&mut self, weights: &Array2<f64>, biases: &Array2<f64>) {
+        self.output = self.inputs.dot(weights) + biases;
     }
 }
 
@@ -203,7 +181,7 @@ pub(crate) fn train_model() {
     let n_samples = 100;
     let n_features = 3;
 
-    let mut rng = Isaac64Rng::seed_from_u64(0);
+    let mut rng = Isaac64Rng::seed_from_u64(8);
     let inputs: Array2<f64> = Array::random_using(
         (n_samples, n_features),
         Uniform::new(0.0, 1.0),
@@ -226,54 +204,64 @@ pub(crate) fn train_model() {
     // DEBUG: println! y_true
     println!("model y_true >>> {:#?}", model.y_true.slice(s![0..5, ..]));
 
+    let mut dense1_weights =
+        Array::random_using((n_features, 2), Uniform::new(-1.0, 1.0), &mut rng)
+            * 0.01;
+    let mut dense1_biases: Array2<f64> = Array::zeros((1, 2));
+    let mut dense2_weights =
+        Array::random_using((3, 3), Uniform::new(-1.0, 1.0), &mut rng) * 0.01;
+    let mut dense2_biases: Array2<f64> = Array::zeros((1, 3));
+
     let mut lowest_loss = 999999.;
-    let mut best_dense1_weights =
-        Array::random((n_features, 2), Normal::new(0.0, 0.05).unwrap());
-    let mut best_dense1_biases =
-        Array::random((1, 2), Normal::new(0.0, 0.05).unwrap());
-    let mut best_dense2_weights =
-        Array::random((3, 3), Normal::new(0.0, 0.05).unwrap());
-    let mut best_dense2_biases =
-        Array::random((1, 3), Normal::new(0.0, 0.05).unwrap());
+    let mut best_dense1_weights = dense1_weights.clone();
+    let mut best_dense1_biases = dense1_biases.clone();
+    let mut best_dense2_weights = dense2_weights.clone();
+    let mut best_dense2_biases = dense2_biases.clone();
 
-    for idx in 1..10 {
-        // TODO: update model.weights n model.biases instead
-        let dense1_weights =
-            Array::random((n_features, 2), Normal::new(0.0, 0.05).unwrap());
-        let dense1_biases =
-            Array::random((1, 2), Normal::new(0.0, 0.05).unwrap());
-        let dense2_weights =
-            Array::random((3, 3), Normal::new(0.0, 0.05).unwrap());
-        let dense2_biases =
-            Array::random((1, 3), Normal::new(0.0, 0.05).unwrap());
+    const ITERATIONS: usize = 100;
 
-        // TODO: pass in model.weights n model.biases instead
+    for idx in 1..ITERATIONS {
+        let dense1_weights_clone = dense1_weights.clone();
+        let dense1_biases_clone = dense1_biases.clone();
+        let dense2_weights_clone = dense2_weights.clone();
+        let dense2_biases_clone = dense2_biases.clone();
+
+        update_weights_and_biases(
+            n_features,
+            &mut dense1_weights,
+            &mut dense1_biases,
+            &mut dense2_weights,
+            &mut dense2_biases,
+        );
+
         let (loss, accuracy) = training_iteration(
             &mut model,
             n_features,
-            dense1_weights.clone(),
-            dense1_biases.clone(),
-            dense2_weights.clone(),
-            dense2_biases.clone(),
+            &dense1_weights,
+            &dense1_biases,
+            &dense2_weights,
+            &dense2_biases,
         );
+        println!("Iter: {}, loss: {}, acc: {}", idx, loss, accuracy);
 
+        // NEED FIX??
+        // The weights and biases freeze at the values of previous best results
+        // if the revertion happens once
         if loss < lowest_loss {
             println!(
                 "New set of weights found, iteration: {}, loss: {}, acc: {}",
                 idx, loss, accuracy
             );
-            // TODO: update best params using model.weights n model.biases
-            // instead
-            best_dense1_weights = dense1_weights;
-            best_dense1_biases = dense1_biases;
-            best_dense2_weights = dense2_weights;
-            best_dense2_biases = dense2_biases;
+            best_dense1_weights = dense1_weights_clone;
+            best_dense1_biases = dense1_biases_clone;
+            best_dense2_weights = dense2_weights_clone;
+            best_dense2_biases = dense2_biases_clone;
             lowest_loss = loss
         } else {
-            model.dense1_weights = best_dense1_weights.clone();
-            model.dense1_biases = best_dense1_biases.clone();
-            model.dense2_weights = best_dense2_weights.clone();
-            model.dense2_biases = best_dense2_biases.clone();
+            dense1_weights = best_dense1_weights.clone();
+            dense1_biases = best_dense1_biases.clone();
+            dense2_weights = best_dense2_weights.clone();
+            dense2_biases = best_dense2_biases.clone();
         }
     }
 }
@@ -281,42 +269,62 @@ pub(crate) fn train_model() {
 fn training_iteration(
     model: &mut Model,
     n_features: usize,
-    best_dense1_weights: Array2<f64>,
-    best_dense1_biases: Array2<f64>,
-    best_dense2_weights: Array2<f64>,
-    best_dense2_biases: Array2<f64>,
+    best_dense1_weights: &Array2<f64>,
+    best_dense1_biases: &Array2<f64>,
+    best_dense2_weights: &Array2<f64>,
+    best_dense2_biases: &Array2<f64>,
 ) -> (f64, f64) {
     model.dense_forward(best_dense1_weights, best_dense1_biases);
-    println!(
-        "dense layer 1 output >>> {:#?}",
-        model.output.slice(s![0..5, ..])
-    );
+    // println!(
+    //     "dense layer 1 output >>> {:#?}",
+    //     model.output.slice(s![0..5, ..])
+    // );
     model.relu_forward();
-    println!(
-        "relu forward output >>> {:#?}",
-        model.output.slice(s![0..5, ..])
-    );
+    // println!(
+    //     "relu forward output >>> {:#?}",
+    //     model.output.slice(s![0..5, ..])
+    // );
 
     model.dense_forward(best_dense2_weights, best_dense2_biases);
-    println!(
-        "dense layer 2 output >>> {:#?}",
-        model.output.slice(s![0..5, ..])
-    );
+    // println!(
+    //     "dense layer 2 output >>> {:#?}",
+    //     model.output.slice(s![0..5, ..])
+    // );
     model.softmax_forward();
-    println!(
-        "softmax forward output >>> {:#?}",
-        model.output.slice(s![0..5, ..])
-    );
+    // println!(
+    //     "softmax forward output >>> {:#?}",
+    //     model.output.slice(s![0..5, ..])
+    // );
 
     let accuracy = model.calculate_accuracy();
-    // DEBUG: println! accuracy
-    println!("accuracy >>> {:#?}", accuracy);
+    // // DEBUG: println! accuracy
+    // println!("accuracy >>> {:#?}", accuracy);
 
     let sample_losses = model.categorical_cross_entropy_forward();
     let loss = model.calculate_mean_loss(&sample_losses);
 
-    // DEBUG: println! loss
-    println!("loss >>> {:#?}", loss);
+    // // DEBUG: println! loss
+    // println!("loss >>> {:#?}", loss);
 
     (loss, accuracy)
+}
+
+fn update_weights_and_biases(
+    n_features: usize,
+    dense1_weights: &mut Array2<f64>,
+    dense1_biases: &mut Array2<f64>,
+    dense2_weights: &mut Array2<f64>,
+    dense2_biases: &mut Array2<f64>,
+) {
+    let mut rng = Isaac64Rng::seed_from_u64(0);
+    let normal_dist = Normal::new(0.0, 1.0).unwrap();
+
+    *dense1_weights +=
+        &(Array2::random_using((n_features, 2), normal_dist, &mut rng) * 0.05);
+    *dense1_biases +=
+        &(Array2::random_using((1, 2), normal_dist, &mut rng) * 0.05);
+    *dense2_weights +=
+        &(Array2::random_using((3, 3), normal_dist, &mut rng) * 0.05);
+    *dense2_biases +=
+        &(Array2::random_using((1, 3), normal_dist, &mut rng) * 0.05);
 }
