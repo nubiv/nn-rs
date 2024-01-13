@@ -15,7 +15,7 @@ use ndarray_rand::{
 };
 use rand_isaac::Isaac64Rng;
 
-use crate::scratch::c3::LayerDense;
+use crate::scratch::dense_layer::LayerDense;
 
 struct ActivationReLU {
     output: ArrayD<f64>,

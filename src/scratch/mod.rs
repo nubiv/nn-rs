@@ -1,4 +1,4 @@
-pub(crate) mod c2;
-pub(crate) mod c3;
-pub(crate) mod c4;
-pub(crate) mod c5;
+pub(crate) mod activation;
+pub(crate) mod dense_layer;
+pub(crate) mod loss;
+pub(crate) mod single_neuron;
