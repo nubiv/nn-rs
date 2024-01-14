@@ -11,6 +11,7 @@ use scratch::{
         add_layers,
         dense_layer,
     },
+    derivative::numerical_derivative,
     loss::categorical_cross_entropy_loss,
     single_neuron::{
         proc_batch_data,
@@ -32,5 +33,6 @@ fn main() {
     // softmax_activation();
     // softmax_activation_ndarray();
     // categorical_cross_entropy_loss();
-    train_model()
+    // train_model()
+    numerical_derivative(1.);
 }
