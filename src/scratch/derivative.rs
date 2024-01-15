@@ -33,3 +33,11 @@ pub(crate) fn numerical_derivative(x: f64) -> f64 {
 
     approximate_derivative
 }
+
+fn analytics_derivative() {
+    // partial derivative:
+    // the impace of a single input has on a function's output
+
+    // gradient:
+    // a vector composed of all of the partial derivatives
+}
