@@ -1,4 +1,5 @@
 pub(crate) mod activation;
+pub(crate) mod backpropagation;
 pub(crate) mod dense_layer;
 pub(crate) mod derivative;
 pub(crate) mod loss;

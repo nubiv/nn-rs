@@ -7,6 +7,7 @@ use scratch::{
         softmax_activation,
         softmax_activation_ndarray,
     },
+    backpropagation::simple_backpropagation,
     dense_layer::{
         add_layers,
         dense_layer,
@@ -34,5 +35,6 @@ fn main() {
     // softmax_activation_ndarray();
     // categorical_cross_entropy_loss();
     // train_model()
-    numerical_derivative(1.);
+    // numerical_derivative(1.);
+    simple_backpropagation();
 }
